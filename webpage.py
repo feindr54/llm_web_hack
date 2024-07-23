@@ -1,11 +1,11 @@
-from playwright.sync_api import sync_playwright
+from playwright.async_api import async_playwright
 
 # TODO - visits the website, and attempts to find username and password and click it
-def create_page(site: str):
-    playwright = sync_playwright().start()
-    browser = playwright.chromium.launch(headless=False, slow_mo=5000)
-    page = browser.new_page()
-    page.goto(site)
+async def create_page(site: str):
+    playwright = await async_playwright().start()
+    browser = await playwright.chromium.launch(headless=False, slow_mo=10000)
+    page = await browser.new_page()
+    await page.goto(site)
     return playwright, browser, page
     # with sync_playwright() as p:
     #     # launches the browser
@@ -19,6 +19,6 @@ def create_page(site: str):
     #     docs_button.click()
     #     # close the browser
     #     browser.close()
-def close_webapp(playwright, browser):
-    browser.close()
-    playwright.stop()
+async def close_webapp(playwright, browser):
+    await browser.close()
+    await playwright.stop()
