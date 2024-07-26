@@ -35,7 +35,7 @@ app.post('/login', (req, res) => {
     console.log(username)
     console.log(password)
 
-    const query = "SELECT * FROM users WHERE user = '" + username + " ' AND password = '" + password + "';"
+    const query = "SELECT * FROM users WHERE user = '" + username + "' AND password = '" + password + "';"
 
     console.log("query: " + query)
     db.query(query, [username, password], (err, results) => {

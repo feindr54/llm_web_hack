@@ -1,23 +1,39 @@
-from webpage import close_webapp, create_page
-from model import Agent
-from playwright.async_api import async_playwright
+# external package imports
 from bs4 import BeautifulSoup
-
-import langchain
-import os
+from dotenv import load_dotenv
 from langchain.globals import set_debug, set_verbose
+from playwright.async_api import async_playwright
 
 import asyncio
-from dotenv import load_dotenv
+import langchain
+import os
 
+# local imports
+from model import Agent
+from webpage import close_webapp
 
+def parse_html(html):
+    soup = BeautifulSoup(html, 'html.parser')
+
+    # Find and remove the <head> section
+    if soup.head:
+        soup.head.decompose()
+    for script in soup.find_all('script'):
+        script.decompose()
+    html_content = str(soup)
+
+    return html_content
 
 async def main():
+    # load the environment variables
     load_dotenv()
-    set_debug(True)
-    set_verbose(True)
-    langchain.debug = True
-    # TODO - start the sql injector / hacker
+
+    # sets debug modes
+    # set_debug(True)
+    # set_verbose(True)
+    # langchain.debug = True
+
+    # start the sql injector / hacker
     agent = Agent(os.environ["VECTORSTORE_PATH"])
 
     # start instance of the web app using playwright
@@ -28,24 +44,22 @@ async def main():
         await page.wait_for_load_state('domcontentloaded')
         html_content = await page.content()
 
-        # TODO - remove the head in the html code
-        soup = BeautifulSoup(html_content, 'html.parser')
-
-        # Find and remove the <head> section
-        if soup.head:
-            soup.head.decompose()
-        for script in soup.find_all('script'):
-            script.decompose()
-        html_content = str(soup)
+        # parse the html content - removes head and script tags
+        html_content = parse_html(html_content)
 
         print("html content: ", html_content)
 
-        attempts = 3
+        usernames = []
+        passwords = []
+
+        attempts = 5
         success = False
         previous = ""
         while (not success and attempts > 0):
-            plan, code = await agent.run(html_content, None if previous == "" else previous)
-            previous += f"\nPlan {2-attempts}:\n" + plan + '\n'
+            plan, code, username, password = await agent.run(html_content, None if previous == "" else previous)
+            usernames.append(username)
+            passwords.append(password)
+            previous += f"\nPayload {6-attempts}:\nUsername: {username}, Password: {password}\n"
             print("CODE:\n", code)
             # execute the code
             try:
@@ -58,22 +72,25 @@ async def main():
                 exec(compiled_code, global_namespace, local_namespace)
                 f = local_namespace['func']
 
-                print("Saved func")
-                await asyncio.wait_for(f(), timeout=15.0)
-                print("Executed func")
+                await f()
                 await page.wait_for_load_state('domcontentloaded')
-                print("Sited loaded")
+                print("Payload injected and site loaded")
 
-                # TODO: extract the new html and check if the code successfully logged in
+                # extract the new html and check if the code successfully logged in
                 new_html_content = await page.content()
 
-                new_soup = BeautifulSoup(new_html_content, 'html.parser')
-                print(new_soup.get_text())
-                if ("logged in" in new_soup.get_text().lower()) or ("success" in new_soup.get_text().lower()):
+                new_soup = parse_html(new_html_content)
+                print(new_soup)
+
+                # CURRENT verification method, will be more sophisticated in the future
+                if ("welcome" in new_soup.lower()) or ("success" in new_soup.lower()):
                     success = True
                     print("Successfully logged in")
                 else:
                     print("Failed to log in")
+
+                # update the html to the new content
+                html_content = new_soup
 
             except Exception as e:
                 print("Error: ", e)
@@ -83,12 +100,11 @@ async def main():
 
         if not success:
             print("Failed to log in after 5 attempts")
-        # exec(code)
 
-    # TODO - somehow parse the code and see if it is valid python code
-    # TODO - execute the code on the webapp
+        print("Attempted usernames: ", usernames)
+        print("Attempted passwords: ", passwords)
 
-    # end the program
+        # end the program
         await close_webapp(playwright, browser)
 
 if __name__ == '__main__':
