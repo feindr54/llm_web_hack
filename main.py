@@ -46,7 +46,7 @@ async def main():
         while (not success and attempts > 0):
             plan, code = await agent.run(html_content, None if previous == "" else previous)
             previous += f"\nPlan {2-attempts}:\n" + plan + '\n'
-            print("code: ", code)
+            print("CODE:\n", code)
             # execute the code
             try:
                 compiled_code = compile(code, '<string>', 'exec')
@@ -56,15 +56,13 @@ async def main():
                 local_namespace = {}
 
                 exec(compiled_code, global_namespace, local_namespace)
-                # import types
-                # func = types.FunctionType(globals()['func'])
-                # await self.func()
                 f = local_namespace['func']
 
                 print("Saved func")
                 await asyncio.wait_for(f(), timeout=15.0)
-                await page.wait_for_load_state('networkidle')
                 print("Executed func")
+                await page.wait_for_load_state('domcontentloaded')
+                print("Sited loaded")
 
                 # TODO: extract the new html and check if the code successfully logged in
                 new_html_content = await page.content()
