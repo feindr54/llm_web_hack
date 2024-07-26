@@ -13,27 +13,6 @@ from dotenv import load_dotenv
 
 
 async def main():
-    async def test():
-        import asyncio
-
-        # List of common username and password combinations
-        credentials = [
-            ('admin', 'admin'),
-            ('user', 'password'),
-            ('root', 'toor'),
-            ('guest', 'guest')
-        ]
-
-        for username, password in credentials:
-            # Input username
-            await page.fill('#username', username)
-            # Input password
-            await page.fill('#password', password)
-            # Click the 'Enter' button
-            await page.click('button[type="button"]')
-
-            # Wait for navigation or some indication of login success
-            await page.wait_for_timeout(2000)  # Wait for 2 seconds to see if login is successful
     load_dotenv()
     set_debug(True)
     set_verbose(True)
@@ -61,7 +40,7 @@ async def main():
 
         print("html content: ", html_content)
 
-        attempts = 1
+        attempts = 3
         success = False
         previous = ""
         while (not success and attempts > 0):
@@ -84,6 +63,7 @@ async def main():
 
                 print("Saved func")
                 await asyncio.wait_for(f(), timeout=15.0)
+                await page.wait_for_load_state('networkidle')
                 print("Executed func")
 
                 # TODO: extract the new html and check if the code successfully logged in
@@ -91,7 +71,7 @@ async def main():
 
                 new_soup = BeautifulSoup(new_html_content, 'html.parser')
                 print(new_soup.get_text())
-                if "logged in" or "success" in new_soup.get_text().lower():
+                if ("logged in" in new_soup.get_text().lower()) or ("success" in new_soup.get_text().lower()):
                     success = True
                     print("Successfully logged in")
                 else:
