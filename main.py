@@ -59,18 +59,23 @@ async def main():
         success = False
         previous = ""
         while (not success and attempts > 0):
+            # checks that the website is the login page or the success page
+            await asyncio.sleep(2)
             html_content = await page.content()
             await page.wait_for_load_state('domcontentloaded')
             html_content = parse_html(html_content)
             if (verify_success(html_content)):
+                print("Final html content: ", html_content)
+                success = True
                 print("Successfully logged in")
                 break
 
+            # run the agent to get the plan and code
             plan, code, username, password = await agent.run(html_content, None if previous == "" else previous)
             print("Plan: ", plan)
             usernames.append(username)
             passwords.append(password)
-            previous += f"\nPayload {6-attempts}:\nUsername: {username}, Password: {password}\n"
+            previous += f"\nPlan {6-attempts}:\n{plan}\n"
             print("CODE:\n", code)
             # execute the code
             try:
