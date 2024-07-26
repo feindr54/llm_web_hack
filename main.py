@@ -93,6 +93,7 @@ async def main():
                 print("Payload injected and site loaded")
 
                 # extract the new html and check if the code successfully logged in
+                await asyncio.sleep(2)
                 new_html_content = await page.content()
 
                 new_soup = parse_html(new_html_content)
