@@ -14,7 +14,9 @@ pip install -r requirements.txt
 ```
 2. Create and run an instance of a MySQL server in the background, and modify the user, password, and database variables in `webpages/server.js`. To run an instance of the webpage (without the LLM), have node installed in the webpages folder, and run `node server.js`
 
-3. To run the llm, run the main file
+3. Create a .env file in the root folder, and define SYSMSG1 for the message to generate a plan, and define SYSMSG2 for the message to generate the code. Additionally, define environmental variables for OPENAI_API_KEY and LANGCHAIN_API_KEY.
+
+4. To run the llm, run the main file
 ```
 python main.py
 ```
