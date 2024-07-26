@@ -5,7 +5,6 @@ from langchain.globals import set_debug, set_verbose
 from playwright.async_api import async_playwright
 
 import asyncio
-import langchain
 import os
 
 # local imports
