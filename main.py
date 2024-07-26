@@ -24,6 +24,9 @@ def parse_html(html):
 
     return html_content
 
+def verify_success(html):
+    return ("welcome" in html.lower()) or ("success" in html.lower())
+
 async def main():
     # load the environment variables
     load_dotenv()
@@ -42,12 +45,12 @@ async def main():
         page = await browser.new_page()
         await page.goto("http://localhost:3000")
         await page.wait_for_load_state('domcontentloaded')
-        html_content = await page.content()
+        # html_content = await page.content()
 
-        # parse the html content - removes head and script tags
-        html_content = parse_html(html_content)
+        # # parse the html content - removes head and script tags
+        # html_content = parse_html(html_content)
 
-        print("html content: ", html_content)
+        # print("html content: ", html_content)
 
         usernames = []
         passwords = []
@@ -56,7 +59,15 @@ async def main():
         success = False
         previous = ""
         while (not success and attempts > 0):
+            html_content = await page.content()
+            await page.wait_for_load_state('domcontentloaded')
+            html_content = parse_html(html_content)
+            if (verify_success(html_content)):
+                print("Successfully logged in")
+                break
+
             plan, code, username, password = await agent.run(html_content, None if previous == "" else previous)
+            print("Plan: ", plan)
             usernames.append(username)
             passwords.append(password)
             previous += f"\nPayload {6-attempts}:\nUsername: {username}, Password: {password}\n"
@@ -80,7 +91,6 @@ async def main():
                 new_html_content = await page.content()
 
                 new_soup = parse_html(new_html_content)
-                print(new_soup)
 
                 # CURRENT verification method, will be more sophisticated in the future
                 if ("welcome" in new_soup.lower()) or ("success" in new_soup.lower()):
