@@ -13,6 +13,7 @@
         <label for="password">Password:</label>
         <input type="password" id="password" name="password" required><br><br>
         <button type="button" onclick="login()">Enter</button>
+        <div id="errorMessage" class="error-message"></div>
     </form>
 
     <script>
@@ -20,20 +21,28 @@
             const username = document.getElementById('username').value;
             const password = document.getElementById('password').value;
 
-            const response = await fetch('/login', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({ username, password })
-            });
+            try {
+                const response = await fetch('/login', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ username, password })
+                });
 
-            const result = await response.json();
-            if (result.success) {
-                alert('Login successful!');
-            } else {
-                alert('Login failed. Please check your username and password.');
+                const result = await response.json();
+                if (result.success) {
+                    // Redirect to welcome.html on successful login
+                    window.location.href = 'welcome.html';
+                } else {
+                    document.getElementById('errorMessage').innerText = 'Login failed. Please check your username and password.';
+                }
             }
+            catch (error) {
+                console.error('Error during login:', error);
+                document.getElementById('errorMessage').innerText = 'An error occurred. Please try again later.';
+            }
+
         }
     </script>
 </body>
